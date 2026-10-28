@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --red: #e10600; --rh: 16px;
+    --font: "Arial Narrow", "Helvetica Neue Condensed Bold", "Helvetica Neue", Helvetica, sans-serif;
+  }
+  html, body {
+    margin: 0; height: 100%; background: transparent; overflow: hidden;
+    font-family: var(--font);
+  }
+
+  /* main panel with cut corners */
+  .box {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    background: rgba(12,12,16,.96);
+    clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    overflow: hidden; -webkit-app-region: drag; user-select: none;
+  }
+  .box::after {                                  /* red edge bar on the left */
+    content: ""; position: absolute; left: 0; top: 16px; bottom: 0; width: 3px; background: var(--red);
+  }
+
+  /* header */
+  header { display: flex; align-items: center; gap: 5px; padding: 8px 8px 0 14px; height: 20px; flex: none; }
+  #title {
+    flex: 0 1 auto; min-width: 0; height: 18px; line-height: 18px; padding: 0 16px 0 8px;
+    background: var(--red); color: #fff; font-size: 11px; font-weight: 800; font-style: italic;
+    letter-spacing: .6px; text-transform: uppercase; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+  }
+  .spacer { flex: 1; }
+  #lap {
+    height: 18px; line-height: 18px; padding: 0 10px; background: #f4f4f7; color: #0c0c10;
+    font-size: 10px; font-weight: 800; font-style: italic; letter-spacing: .8px; white-space: nowrap;
+    clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  }
+  #lap[hidden] { display: none; }
+  #lap b { font-size: 11px; margin-left: 4px; }
+  #badge {
+    display: flex; align-items: center; gap: 5px; height: 18px; padding: 0 10px;
+    background: #2c2c35; color: #cfcfd8; font-size: 10px; font-weight: 800; font-style: italic;
+    letter-spacing: 1px; white-space: nowrap;
+    clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  }
+  #badge i { width: 6px; height: 6px; border-radius: 50%; background: #8a8a95; }
+  #badge.live { background: var(--red); color: #fff; }
+  #badge.live i { background: #fff; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  #tbtn, #close {
+    width: 16px; height: 16px; line-height: 15px; text-align: center; color: #9a9aa5;
+    font-size: 13px; cursor: pointer; opacity: 0; transition: .15s; -webkit-app-region: no-drag; flex: none;
+  }
+  .box:hover #tbtn, .box:hover #close { opacity: 1; }
+  #tbtn:hover, #close:hover { background: var(--red); color: #fff; }
+
+  /* body */
+  .stage { position: relative; flex: 1; display: flex; min-height: 0; margin-top: 6px; border-top: 1px solid rgba(225,6,0,.7); }
+  .mapwrap {
+    position: relative; flex: 1; min-width: 0;
+    background: repeating-linear-gradient(135deg, transparent 0 9px, rgba(255,255,255,.025) 9px 10px);
+  }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* timing tower */
+  #tower { width: 138px; flex: none; padding: 5px 0 4px 10px; overflow: hidden; }
+  body.notower #tower { display: none; }
+  @media (max-width: 359px) { #tower { display: none; } }
+  .row {
+    display: flex; align-items: center; height: var(--rh); margin-bottom: 2px;
+    font-size: calc(var(--rh) * .6); font-weight: 800; font-style: italic; color: #f0f0f5;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(90deg, rgba(40,40,50,.95), rgba(22,22,28,.95));
+    clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  }
+  .row .p { width: 2em; height: 100%; line-height: var(--rh); text-align: center; background: #f4f4f7; color: #0c0c10; font-weight: 900; }
+  .row:first-child .p { background: var(--red); color: #fff; }
+  .row .c { width: 4px; height: 100%; flex: none; }
+  .row .n { flex: 1; padding-left: 6px; letter-spacing: .6px; }
+  .row .g { padding-right: 8px; color: #b9b9c4; font-size: .85em; white-space: nowrap; }
+  .row .g.lead { color: #ff4d45; letter-spacing: .8px; }
+  .row .t { width: .85em; height: .85em; border-radius: 50%; margin-right: 8px; border: 2px solid #777; box-sizing: border-box; flex: none; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <header>
+      <div id="title">Loading…</div>
+      <div class="spacer"></div>
+      <div id="lap" hidden>LAP<b>–</b></div>
+      <div id="badge"><i></i><span>…</span></div>
+      <div id="tbtn" title="Show / hide timing tower" onclick="document.body.classList.toggle('notower')">≡</div>
+      <div id="close" onclick="window.close()">×</div>
+    </header>
+    <div class="stage">
+      <div id="tower"></div>
+      <div class="mapwrap"><canvas id="map"></canvas></div>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

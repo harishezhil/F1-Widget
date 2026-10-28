@@ -1,0 +1,13 @@
+{
+  "name": "f1-widget",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . F1Widget --platform=darwin --out=dist --overwrite --ignore=dist"
+  },
+  "devDependencies": {
+    "@electron/packager": "^18.4.4",
+    "electron": "^30.5.1"
+  }
+}
