@@ -1,9 +1,11 @@
-const { app, BrowserWindow, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, screen, ipcMain } = require('electron');
 const path = require('path');
+
+let win, tray, quitting = false;
 
 app.whenReady().then(() => {
   const { workArea } = screen.getPrimaryDisplay();
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 460,
     height: 270,
     minWidth: 150,
@@ -21,8 +23,30 @@ app.whenReady().then(() => {
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true });
   win.loadFile('index.html');
 
-  if (process.platform === 'darwin') app.dock.hide();   // no Dock icon, behaves like a widget
+  // the × button now hides the widget; quit from the menu bar icon
+  win.on('close', (e) => { if (!quitting) { e.preventDefault(); win.hide(); } });
+
+  if (process.platform === 'darwin') app.dock.hide();
+
+  tray = new Tray(path.join(__dirname, 'trayTemplate.png'));
+  tray.setToolTip('F1 Widget');
+  const toggle = () => (win.isVisible() ? win.hide() : win.show());
+  const menu = Menu.buildFromTemplate([
+    { label: 'Show / hide widget', click: toggle },
+    { label: 'Reset position', click: () => {
+        const { workArea: w } = screen.getPrimaryDisplay();
+        win.setPosition(w.x + 16, w.y + 16);
+        win.show();
+    } },
+    { type: 'separator' },
+    { label: 'Quit F1 Widget', click: () => app.quit() },
+  ]);
+  tray.on('click', toggle);
+  tray.on('right-click', () => tray.popUpContextMenu(menu));
 });
+
+app.on('before-quit', () => { quitting = true; });
+
 // API calls run here so the page never hits CORS problems
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const stamps = [];
